@@ -1,4 +1,7 @@
 ﻿##  Wzorowane na przykładzie Rona Zacharskiego
+from numpy import median, absolute
+from math import sqrt
+
 
 class Classifier:
 
@@ -29,35 +32,44 @@ class Classifier:
         # now normalize the data
         for i in range(self.vlen):
             self.normalizeColumn(i)
-        
-
-        
 
     def getMedian(self, alist):
         """TODO: zwraca medianę listy"""
 
-        return 0
-        
+        med = median(alist)
+        return med
 
-    def getAbsoluteStandardDeviation(self, alist, median):
+    def getAbsoluteStandardDeviation(self, alist, med):
         """TODO: zwraca absolutne odchylenie standardowe listy od mediany"""
-        return 0
+        asd = sum([absolute(x - med) for x in alist])/len(alist)
+        return asd
 
     def normalizeColumn(self, columnNumber):
-        """TODO: mając dany nr kolumny w self.data, dokonuje normalizacji wg Modified Standard Score"""
-
+        """TODO: mając dany nr kolumny, dokonuje normalizacji tej kolumny w self.data wg Modified Standard Score"""
+        col = [v[1][columnNumber] for v in self.data]
+        median = self.getMedian(col)
+        asd = self.getAbsoluteStandardDeviation(col, median)
+        self.medianAndDeviation.append((median, asd))
+        for v in self.data:
+            v[1][columnNumber] = (v[1][columnNumber] - median) / asd
         pass
 
+    def normalizeVector(self, v):
+        """Znormalizuj podany wektor mając daną medianę i odchylenie standardowe dla każdej kolumny"""
+        vector = list(v)
+        for i in range(len(vector)):
+            (median, asd) = self.medianAndDeviation[i]
+            vector[i] = (vector[i] - median) / asd
+        return vector
 
     def manhattan(self, vector1, vector2):
         """Zwraca odległość Manhattan między dwoma wektorami cech."""
         return sum(map(lambda v1, v2: abs(v1 - v2), vector1, vector2))
 
-
     def nearestNeighbor(self, itemVector):
         """return nearest neighbor to itemVector"""
-        
-        return ((0, ("TODO: Zwróc najbliższego sąsiada", [0], [])))
+        return min([ (self.manhattan(itemVector, item[1]), item)
+                     for item in self.data])
     
     def classify(self, itemVector):
         """Return class we think item Vector is in"""
@@ -113,13 +125,13 @@ def testNormalization():
              [-1.2605, -0.8915], [0.7563, 0.0297], [0.7563, 1.4264],
              [0.7563, 1.4264], [-0.4202, 0.0297], [-0.084, -0.0297],
              [0.084, -0.2972], [-0.7563, -0.9212]]
-    
+
 
     for i in range(len(list1)):
         assert(round(classifier.data[i][1][0],4) == list1[i][0])
         assert(round(classifier.data[i][1][1],4) == list1[i][1])
     print("normalizeColumn is OK")
-    
+
 def testClassifier():
     classifier = Classifier('athletesTrainingSet.txt')
     br = ('Basketball', [72, 162], ['Brittainey Raven'])
@@ -151,8 +163,8 @@ def testClassifier():
     assert(classifier.classify(cl[1]) == 'Basketball')
     assert(classifier.classify(nl[1]) == 'Gymnastics')
     print('Classify fn OK')
-    
-    
+
+
 def test(training_filename, test_filename):
     """Test the classifier on a test set of data"""
     classifier = Classifier(training_filename)
@@ -177,15 +189,18 @@ def test(training_filename, test_filename):
             prefix = '+'
         print("%s  %12s  %s" % (prefix, theClass, line))
     print("%4.2f%% correct" % (numCorrect * 100/ len(lines)))
-        
+
 
 ##
 ##  Przykłady użycia
-#  test('athletesTrainingSet.txt', 'athletesTestSet.txt')
-#  test("irisTrainingSet.data", "irisTestSet.data")
-#  test("mpgTrainingSet.txt", "mpgTestSet.txt")
+test('athletesTrainingSet.txt', 'athletesTestSet.txt')
+#test("irisTrainingSet.data", "irisTestSet.data")
+#test("mpgTrainingSet.txt", "mpgTestSet.txt")
 
 testMedianAndASD()
-# testNormalization()
-# testClassifier()
+testNormalization()
+testClassifier()
+
+
+
 
